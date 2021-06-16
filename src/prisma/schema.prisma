@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Permission {
+  id             Int    @default(autoincrement()) @id
+  permissionName String @unique @db.VarChar(50)
+  roles          Role[]
+}
+
+model Role {
+  id              Int           @default(autoincrement()) @id
+  roleName        String        @unique @db.VarChar(50)
+  roleDescription String?       @db.VarChar(200)
+  permissions     Permission[]
+  users           User[]
+}
+
+model Post {
+  id        Int      @default(autoincrement()) @id
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  title     String   @db.VarChar(200)
+  content   String?  
+  views     Int      @default(0)
+  published Boolean  @default(false)
+  author    User     @relation(fields: [authorId], references: [id])
+  authorId  Int
+}
+
+model User {
+  id           Int       @default(autoincrement()) @id
+  thirdPartyId String?  
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  nickname     String    @db.VarChar(50)
+  email        String    @unique @db.VarChar(300)
+  avatar       String?
+  isVerified   Boolean   @default(false)
+  /// @TypeGraphQL.omit(output: true)
+  password     String?   
+  profile      Profile?  
+  VerificationToken        VerificationToken[]
+  roles        Role[]
+  posts        Post[]
+}
+
+model Profile {
+  id     Int     @default(autoincrement()) @id
+  bio    String? @db.VarChar(500)
+  user   User    @relation(fields: [userId], references: [id])
+  userId Int     @unique
+}
+
+model Session {
+  sid    String   @id
+  sess   Json
+  expire DateTime
+
+  @@index([expire], name: "IDX_session_expire")
+}
+
+model VerificationToken {
+  id  Int   @default(autoincrement())
+  token String @unique
+  user   User    @relation(fields: [userId], references: [id])
+  expire DateTime
+  userId  Int
+}
+
