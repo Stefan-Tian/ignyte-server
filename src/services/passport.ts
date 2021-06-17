@@ -3,8 +3,9 @@ import { OAuth2Strategy as GoogleStrategy } from 'passport-google-oauth';
 import { Strategy as LocalStrategy } from 'passport-local';
 import argon2 from 'argon2';
 import prisma from '../prisma/prisma';
+import { User } from '@prisma/client';
 
-passport.serializeUser<any, any>((user: any, done: any) => {
+passport.serializeUser<any, any>((user: User, done: any) => {
   done(null, user.id);
 });
 
