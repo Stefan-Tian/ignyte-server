@@ -15,3 +15,11 @@ declare namespace NodeJS {
     MAIL_PASS: string;
   }
 }
+
+declare namespace Express {
+  export interface User {
+    id: number;
+    email: string;
+    nickname: string;
+  }
+}
