@@ -71,5 +71,6 @@ model VerificationToken {
   user   User    @relation(fields: [userId], references: [id])
   expire DateTime
   userId  Int
+  createdAt    DateTime  @default(now())
 }
 

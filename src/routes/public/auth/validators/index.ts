@@ -16,3 +16,5 @@ export const resetPasswordValidator = [
   body('token').isString(),
   body('password').isString().isLength({ min: 6 }),
 ];
+
+export const resendEmailValidator = forgetPasswordValidator;
