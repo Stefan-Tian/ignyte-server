@@ -3,8 +3,7 @@ import { Router, Request, Response } from 'express';
 import { validateRequest } from '../../../middlewares/validateRequest';
 import prisma from '../../../prisma/prisma';
 import { forgetPasswordValidator } from './validators';
-import { generateToken } from './utils';
-import { sendEmail } from '../../../services/email';
+import { sendResetPasswordEmail } from './utils';
 
 const router = Router();
 
@@ -21,18 +20,9 @@ router.post(
     });
 
     if (user) {
-      const resetPasswordTokenData = await generateToken(4, user.id);
-
-      const sentSuccessfully = await sendEmail(
-        'public/verification.pug',
-        {
-          title: 'Reset your password',
-          action: 'reset your account',
-          button: 'reset',
-          verificationLink: `http://localhost:4000/reset-password?token=${resetPasswordTokenData.token}`,
-        },
-        user.email,
-        'Reset Password'
+      const sentSuccessfully = await sendResetPasswordEmail(
+        user.id,
+        user.email
       );
 
       if (!sentSuccessfully) {

@@ -1,8 +1,12 @@
 import passport from 'passport';
-import { OAuth2Strategy as GoogleStrategy } from 'passport-google-oauth';
+import {
+  sendVerificationEmail,
+  sendLoginFailedAlertEmail,
+} from '../routes/public/auth/utils';
 import { Strategy as LocalStrategy } from 'passport-local';
 import argon2 from 'argon2';
 import prisma from '../prisma/prisma';
+import { sendEmail } from './email';
 
 passport.serializeUser<any, any>((user: any, done: any) => {
   done(null, user.id);
@@ -54,7 +58,22 @@ const localCallback = async (email: string, password: string, done: any) => {
   });
 
   const generalErrorMsg =
-    'Incorrect Email or Password, or check your email for verification link!';
+  if (!user || !user.isVerified) {
+    if (user && !user.isVerified) {
+      await sendVerificationEmail(user.id, user.email);
+    } else {
+      await sendEmail(
+        'public/verification.pug',
+        {
+          title: 'Someone tried to login to a user that does not exist',
+          action: 'monitor the service',
+          button: 'check',
+          verificationLink: `dev.ignyte.life`,
+        },
+        'stefantien@ignyte.life',
+        'Non-existent user login attempt'
+      );
+    }
 
   if (!user) {
     done(undefined, false, { message: generalErrorMsg });
@@ -63,7 +82,7 @@ const localCallback = async (email: string, password: string, done: any) => {
 
   const valid = await argon2.verify(user.password!, password);
   if (!valid) {
-    done(undefined, false, { message: generalErrorMsg });
+    await sendLoginFailedAlertEmail(user.id, user.email);
   }
 
   done(undefined, user);

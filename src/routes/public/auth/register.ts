@@ -3,8 +3,7 @@ import { Router, Request, Response } from 'express';
 import { registerValidator } from './validators';
 import { validateRequest } from '../../../middlewares/validateRequest';
 import prisma from '../../../prisma/prisma';
-import { sendEmail } from '../../../services/email';
-import { generateToken, hashPassword } from './utils';
+import { hashPassword, sendVerificationEmail } from './utils';
 
 const router = Router();
 
@@ -30,19 +29,7 @@ router.post(
         },
       });
 
-      const verificationTokenData = await generateToken(4, user.id);
-      const sentSuccessfully = await sendEmail(
-        'public/verification.pug',
-        {
-          title: 'Verify your account',
-          action: 'verify your account',
-          button: 'verify',
-          verificationLink: `http://localhost:4000/verify?token=${verificationTokenData.token}`,
-        },
-        user.email,
-        'Email Verification'
-      );
-
+      const sentSuccessfully = await sendVerificationEmail(user.id, user.email);
       if (!sentSuccessfully) {
         throw new Error('Failed to send verification email.');
       }
