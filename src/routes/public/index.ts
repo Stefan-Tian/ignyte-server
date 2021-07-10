@@ -1,6 +1,7 @@
 import loginRoute from './auth/login';
 import logoutRoute from './auth/logout';
 import registerRoute from './auth/register';
+import loginWithGoogleRoute from './auth/loginGoogle';
 import verifyAccountRoute from './auth/verifyAccount';
 import resetPasswordRoute from './auth/resetPassword';
 import forgetPasswordRoute from './auth/forgetPassword';
@@ -19,6 +20,7 @@ const setPublicRoutes = (app: Express) => {
   register(verifyAccountRoute);
   register(resetPasswordRoute);
   register(forgetPasswordRoute);
+  register(loginWithGoogleRoute);
   register(resendVerificationRoute);
 
   // post

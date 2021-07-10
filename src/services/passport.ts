@@ -1,4 +1,5 @@
 import passport from 'passport';
+import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import {
   sendVerificationEmail,
   sendLoginFailedAlertEmail,
@@ -21,7 +22,7 @@ passport.deserializeUser(async (id: number, done) => {
 const googleOptions = {
   clientID: process.env.GOOGLE_APP_ID || '',
   clientSecret: process.env.GOOGLE_APP_SECRET || '',
-  callbackURL: '/auth/google/callback',
+  callbackURL: '/api/auth/google/callback',
 };
 
 const oauthCallback = async (
@@ -30,10 +31,12 @@ const oauthCallback = async (
   profile: any,
   done: any
 ) => {
-  const { id, email, name } = profile;
+  const { id, emails, displayName } = profile;
+  const email = emails[0].value;
   const existingUser = await prisma.user.findUnique({
     where: { email },
   });
+
   if (existingUser) {
     done(null, existingUser);
     return;
@@ -43,7 +46,7 @@ const oauthCallback = async (
     data: {
       thirdPartyId: id,
       email,
-      nickname: name,
+      nickname: displayName,
       isVerified: true,
     },
   });
@@ -58,6 +61,8 @@ const localCallback = async (email: string, password: string, done: any) => {
   });
 
   const generalErrorMsg =
+    'Incorrect Email or Password, or check your email for a verification link!';
+
   if (!user || !user.isVerified) {
     if (user && !user.isVerified) {
       await sendVerificationEmail(user.id, user.email);
@@ -75,14 +80,15 @@ const localCallback = async (email: string, password: string, done: any) => {
       );
     }
 
-  if (!user) {
-    done(undefined, false, { message: generalErrorMsg });
+    done(generalErrorMsg, null);
     return;
   }
 
   const valid = await argon2.verify(user.password!, password);
   if (!valid) {
     await sendLoginFailedAlertEmail(user.id, user.email);
+    done(generalErrorMsg, null);
+    return;
   }
 
   done(undefined, user);
